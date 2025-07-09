@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Busca de Licitações</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1a202c;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        input[type="text"],
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            box-sizing: border-box; /* Importante */
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2b6cb0;
+        }
+        #status {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Painel de Busca de Licitações</h1>
+        <form id="filtroForm">
+            <div class="form-group">
+                <label for="data_inicial">Data Inicial</label>
+                <input type="date" id="data_inicial" name="dataResultadoPncpInicial" required>
+            </div>
+            <div class="form-group">
+                <label for="data_final">Data Final</label>
+                <input type="date" id="data_final" name="dataResultadoPncpFinal" required>
+            </div>
+            <div class="form-group">
+                <label for="estado">Estado (Sigla, ex: SP)</label>
+                <input type="text" id="estado" name="unidadeOrgaoUfSigla">
+            </div>
+             <div class="form-group">
+                <label for="palavra_chave">Palavra-Chave (no objeto)</label>
+                <input type="text" id="palavra_chave" name="palavraChave">
+            </div>
+            
+            <button type="submit">Iniciar Busca Automática</button>
+        </form>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // SEU ÚNICO TRABALHO É AQUI:
+        // Cole a URL de PRODUÇÃO do seu Webhook do n8n abaixo, entre as aspas.
+        const webhookUrl = 'https://a81dbec384aa.ngrok-free.app/webhook/505919cb-e0de-4e8f-8cf2-c40b46479865';
+
+        const form = document.getElementById('filtroForm');
+        const statusDiv = document.getElementById('status');
+
+        form.addEventListener('submit', function(event) {
+            // Previne o recarregamento da página
+            event.preventDefault();
+            
+            statusDiv.textContent = 'Enviando filtros para o robô...';
+            statusDiv.style.color = '#4a5568';
+
+            // Pega todos os dados do formulário
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Envia os dados para o n8n
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Erro ao enviar para o n8n.');
+            })
+            .then(data => {
+                console.log('n8n respondeu:', data);
+                statusDiv.textContent = 'Busca iniciada com sucesso!';
+                statusDiv.style.color = 'green';
+                form.reset(); // Limpa o formulário
+            })
+            .catch((error) => {
+                console.error('Erro:', error);
+                statusDiv.textContent = 'Falha ao iniciar a busca. Verifique o console.';
+                statusDiv.style.color = 'red';
+            });
+        });
+    </script>
+
+</body>
+</html>
